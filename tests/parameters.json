@@ -1,0 +1,24 @@
+{
+  "routing": {
+    "seed": 42,
+    "samples_per_segment": 2,
+    "expiry_wait_seconds": 2
+  },
+  "divert": {
+    "seed": 42,
+    "samples_per_segment": 2,
+    "tcp_rounds": 3,
+    "udp_interval_seconds": 0.2,
+    "negative_wait_seconds": 0.2
+  },
+  "fw": {
+    "positive_wait_seconds": 1.0,
+    "negative_wait_seconds": 0.2
+  },
+  "integration": {
+    "positive_wait_seconds": 1.0,
+    "negative_wait_seconds": 0.2,
+    "rounds": 3,
+    "udp_interval_seconds": 0.2
+  }
+}

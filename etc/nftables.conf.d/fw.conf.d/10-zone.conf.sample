@@ -1,0 +1,21 @@
+# Example zone: interfaces in ifname_example get their own input and output policies.
+# Input allows DNAT targets and SSH, and rejects the rest.
+table inet fw {
+	set ifname_example {
+		type ifname
+		elements = { "lan0" }
+	}
+
+	chain input_example {
+		ct status dnat accept
+		tcp dport ssh accept
+		goto handle_reject
+	}
+
+	chain output_example {
+		accept
+	}
+}
+
+add rule inet fw input iifname @ifname_example goto input_example
+add rule inet fw output oifname @ifname_example goto output_example

@@ -1,0 +1,24 @@
+# Divert original-direction TCP/UDP whose class is in divert_classes.
+# Local output is diverted only from the level-1 cgroups in divert_cgroupsv2.
+table inet routing {
+	set divert_classes {
+		type mark
+		flags interval
+	}
+
+	set divert_cgroupsv2 {
+		type cgroupsv2
+		elements = { "user.slice" }
+	}
+
+	chain routing_select_divert {
+		mark & $routing_mask != @divert_classes return
+		ct direction != original return
+		meta l4proto != { tcp, udp } return
+
+		meta iif != 0 ct mark set ct mark & $routing_original_clear_mask | $routing_divert return
+		socket cgroupv2 level 1 @divert_cgroupsv2 ct mark set ct mark & $routing_original_clear_mask | $routing_divert
+	}
+}
+
+add rule inet routing routing_select jump routing_select_divert

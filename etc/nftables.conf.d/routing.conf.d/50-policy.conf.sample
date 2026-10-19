@@ -1,0 +1,11 @@
+# Select route ID 0x081 for original-direction TCP/UDP gateway traffic to 198.51.100.0/24.
+# 0x081 needs a matching RPDB rule and route table.
+table inet routing {
+	chain routing_select_example {
+		mark & $routing_mask != $routing_gateway return
+
+		ct direction original meta l4proto { tcp, udp } ip daddr 198.51.100.0/24 ct mark set ct mark & $routing_original_clear_mask | 0x081
+	}
+}
+
+add rule inet routing routing_select jump routing_select_example

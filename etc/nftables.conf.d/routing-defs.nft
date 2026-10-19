@@ -1,0 +1,19 @@
+define routing_mask = 0x00000fff
+define routing_clear_mask = 0xfffff000
+define routing_original_mask = 0x000000ff
+define routing_original_clear_mask = 0xffffff00
+define routing_reply_mask = 0x0000ff00
+define routing_reply_clear_mask = 0xffff00ff
+define routing_reply_shift = 0x08
+
+define routing_unassigned = 0x000
+define routing_normal = 0x001
+define routing_specific = 0x100
+define routing_gateway = 0x101
+define routing_pending = 0x100-0xfff
+define routing_probe = 0x7ff
+define routing_divert = 0x080
+
+define routing_probe_interface = "rtprobe"
+define routing_probe_nexthop4 = 192.0.2.254
+define routing_probe_nexthop6 = 2001:db8:ffff::fe
