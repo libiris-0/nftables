@@ -1,6 +1,6 @@
 # Classify gateway traffic in two steps: destination address -> country -> class.
 # geo4, geo6 and geoclass are filled externally, e.g. by nftables-geoip.
-# meta priority holds the intermediate country ID.
+# meta priority holds the intermediate country ID. A lookup miss skips the rest of the rule.
 table inet routing {
 	map geo4 {
 		type ipv4_addr : classid
@@ -20,11 +20,12 @@ table inet routing {
 	chain routing_select_classify {
 		mark & $routing_mask != $routing_gateway return
 
-		meta priority set 0x00000000
-		meta priority set ip daddr map @geo4
-		meta priority set ip6 daddr map @geo6
-		meta priority set meta priority map @geoclass mark set mark & $routing_clear_mask | meta priority & $routing_mask
-		meta priority set 0x00000000
+		meta priority set ip daddr map @geo4 \
+			meta priority set meta priority map @geoclass \
+			mark set mark & $routing_clear_mask | meta priority & $routing_mask
+		meta priority set ip6 daddr map @geo6 \
+			meta priority set meta priority map @geoclass \
+			mark set mark & $routing_clear_mask | meta priority & $routing_mask
 	}
 }
 

@@ -649,7 +649,8 @@ class Suite:
             a = ADDR[v]
             h.nft(f'add element inet routing geo{v} {{ {a["remote"]} : 0x800, {a["other"]} : 0x801, '
                   f'{a["inlet"][0]} : 0x800, {a["wan"][0]} : 0x800 }}')
-        h.nft('add element inet routing geoclass { 0x800 : 0x102 }')
+        # 0x000 is not a country; an address lookup miss must not reach geoclass.
+        h.nft('add element inet routing geoclass { 0x000 : 0x103, 0x800 : 0x102 }')
         checks = []
         for v in (4, 6):
             for origin in ('external', 'local'):
