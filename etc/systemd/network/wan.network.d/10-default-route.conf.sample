@@ -1,14 +1,5 @@
-[DHCPv4]
-UseGateway=no
-
 [IPv6AcceptRA]
 UseGateway=no
-
-[Route]
-Destination=0.0.0.0/0
-Gateway=_dhcp4
-Table=default
-GatewayOnLink=yes
 
 [Route]
 Destination=::/0

@@ -42,7 +42,7 @@ tests/                                测试
 
 routing 用报文 mark 的低 12 位传递路由 ID。连接的 original 和 reply 方向各有一个选择，保存在 ct mark 中。处理过程如下：
 
-1. 一个方向的首个报文到达时，routing 先探测目的端并分类。local 表、main 表，或优先级在探测回退规则之前的 RPDB 规则选出了路由时，分类为 specific，否则为 gateway。
+1. 一个方向的首个报文到达时，routing 先探测目的端并分类。优先级在探测回退规则之前的 RPDB 规则选出了路由时，分类为 specific，否则为 gateway。
 2. drop-in 在 `routing_select` 中按分类、地址等条件为连接提交路由 ID。
 3. 没有提交时，选择普通路由 `0x001`。
 4. 选择写入 ct mark，并恢复到报文 mark，RPDB 按 mark 选择路由表。
@@ -80,35 +80,35 @@ unshare -rn nft -I etc -c -f etc/nftables.conf
 
 | 文件 | 内容 |
 | --- | --- |
-| `00-loopback.network` | RPDB 规则、表 3346 的 local 默认路由，以及 default 表的 unreachable 兜底路由 |
+| `00-loopback.network` | RPDB 规则和表 3346 的 local 默认路由 |
 | `10-rtprobe.netdev`、`10-rtprobe.network` | dummy 接口 `rtprobe`，以及表 1000 中经 `rtprobe` 的默认路由 |
-| `wan.network.d/10-default-route.conf.sample` | 把 DHCPv4 网关和 RA 默认网关安装到 default 表 |
+| `wan.network.d/10-default-route.conf.sample` | 把 RA 默认网关安装到 default 表 |
 
 RPDB 规则如下：
 
-| 优先级 | 匹配 | 查询 | 用途 |
-| --- | --- | --- | --- |
-| 100 | `0x080/0xfff` | 表 3346 | 把选中的流量交给本机 |
-| 31000 | `0x7ff/0xfff` | main | 探测 |
-| 31001 | `0x7ff/0xfff` | 表 1000 | 探测回退 |
-| 32000 | 全部 | main，抑制默认路由 | 普通查询 |
-| 32001 | 全部 | default | 普通查询 |
+| 优先级 | 地址族 | 匹配 | 查询 | 用途 |
+| --- | --- | --- | --- | --- |
+| 100 | 两者 | `0x080/0xfff` | 表 3346 | 把选中的流量交给本机 |
+| 31000 | IPv4 | `0x7ff/0xfff` | main，抑制默认路由 | 探测 |
+| 31000 | IPv6 | `0x7ff/0xfff` | main | 探测 |
+| 31001 | 两者 | `0x7ff/0xfff` | 表 1000 | 探测回退 |
+| 32767 | IPv6 | 全部 | default | 普通查询 |
 
 `0x001` 和 `0x080` 以外的路由 ID 没有现成的 RPDB 规则和路由表，需要另外配置。添加规则时：
 
 - 优先级 100 的规则为 `0x080` 选出路由，排在它之后的规则改变不了交给 divert 的路由。
 - 排在探测回退规则之前、又能匹配探测报文的规则会影响分类：它为目的端选出路由时，该目的端分类为 specific。不限定 fwmark 的规则，以及掩码不覆盖完整路由字段的 fwmark 规则，都可能匹配探测报文，例如 `fwmark 0x1/0x1` 匹配 `0x7ff`。按完整路由字段匹配 fwmark 的规则不会匹配探测报文。
 
-部署前提：**默认路由不放在 main 表中**，静态默认路由也一样，都放在 default 表。
+部署前提：**IPv6 默认路由不放在 main 表中**，静态默认路由也一样，都放在 default 表。
 
-- 探测按「main 表中没有路由」识别 gateway 流量。main 表中有默认路由时，所有目的端都会分类为 specific。
-- IPv6 的 nft FIB 查询不遵守 `suppress_prefixlength`，所以 RPDB 规则无法在探测中抑制 main 表的默认路由。
+- 探测按「探测回退规则之前没有选出路由」识别 gateway 流量。IPv4 的探测规则抑制 main 表的默认路由。
+- IPv6 的 nft FIB 查询不遵守 `suppress_prefixlength`，所以无法用同样的方式抑制。
 
 `wan.network.d/` 只是示例目录名。使用时，改成实际 WAN 接口的基础 `.network` 文件名加 `.d`，再去掉 `.sample` 后缀。
 
 已知限制：
 
-- RIO 中的 `::/0` 和 DHCP option 121 中的默认路由仍会进入 main 表，不受支持。这两类来源中的具体路由不受影响。
+- RIO 中的 `::/0` 仍会进入 main 表，不受支持。RIO 中的具体路由不受影响。
 - `RouteDenyList=::/0` 会同时过滤具体的 RIO，所以示例没有使用它。
 - networkd 重启时会清除动态配置，直到重新收到 RA 或 DHCP 回复。
 

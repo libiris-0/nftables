@@ -20,7 +20,13 @@ Family=both
 [RoutingPolicyRule]
 Priority=31000
 FirewallMark=0x7ff/0xfff
-Family=both
+SuppressPrefixLength=0
+Family=ipv4
+
+[RoutingPolicyRule]
+Priority=31000
+FirewallMark=0x7ff/0xfff
+Family=ipv6
 
 [RoutingPolicyRule]
 Priority=31001
@@ -28,24 +34,7 @@ FirewallMark=0x7ff/0xfff
 Table=1000
 Family=both
 
-[Route]
-Destination=0.0.0.0/0
-Table=default
-Type=unreachable
-Metric=4294967294
-
-[Route]
-Destination=::/0
-Table=default
-Type=unreachable
-Metric=4294967294
-
 [RoutingPolicyRule]
-Priority=32000
-SuppressPrefixLength=0
-Family=both
-
-[RoutingPolicyRule]
-Priority=32001
+Priority=32767
 Table=default
-Family=both
+Family=ipv6

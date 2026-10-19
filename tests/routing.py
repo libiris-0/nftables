@@ -23,7 +23,7 @@ ITEMS = {
     '3.3/directions': ('core', 'original 和 reply 方向分别记住选择'),
     '3.3/persistence': ('core', '路由表和 RPDB 的变化不改变选择，出口随系统路由改变'),
     '3.3/expiry': ('core', '连接状态失效后，新连接从空选择开始'),
-    '3.4/class': ('core', 'local 表、main 表或探测规则之前的 RPDB 规则选出路由时为 specific，否则为 gateway'),
+    '3.4/class': ('core', '探测回退规则之前的 RPDB 规则选出路由时为 specific，否则为 gateway'),
     '3.4/result': ('core', '有提交时 D 为提交值，无提交时为 routing_normal'),
     '5.1': ('interface', '目录中的 *.conf 按文件名顺序追加，其他文件不加载'),
     '5.3/called': ('interface', 'routing_select 只在路由字段为 pending 时调用'),
@@ -165,12 +165,14 @@ class Fixture:
             nexthop = D[f'routing_probe_nexthop{v}']
             self.host.ip(f'-{v}', 'route', 'add', 'default', 'via', nexthop, 'dev',
                          D['routing_probe_interface'], 'onlink', 'table', '1000')
-            self.host.ip(f'-{v}', 'route', 'add', 'default', 'via', a['wan'][1], 'table', 'default')
-            self.host.ip(f'-{v}', 'rule', 'add', 'priority', '31000', 'fwmark', probe, 'lookup', 'main')
+            # IPv4 keeps its default route in main and suppresses it for probes.
+            suppress = ('suppress_prefixlength', '0') if v == 4 else ()
+            self.host.ip(f'-{v}', 'route', 'add', 'default', 'via', a['wan'][1],
+                         *(() if v == 4 else ('table', 'default')))
+            self.host.ip(f'-{v}', 'rule', 'add', 'priority', '31000', 'fwmark', probe, 'lookup', 'main', *suppress)
             self.host.ip(f'-{v}', 'rule', 'add', 'priority', '31001', 'fwmark', probe, 'lookup', '1000')
-            self.host.ip(f'-{v}', 'rule', 'add', 'priority', '32000', 'lookup', 'main',
-                         'suppress_prefixlength', '0')
-            self.host.ip(f'-{v}', 'rule', 'add', 'priority', '32001', 'lookup', 'default')
+            if v == 6:
+                self.host.ip(f'-{v}', 'rule', 'add', 'priority', '32767', 'lookup', 'default')
             for kind in ('blackhole', 'unreachable', 'prohibit'):
                 self.host.ip(f'-{v}', 'route', 'add', kind, a[kind])
         self.scratch = Path(tempfile.mkdtemp(prefix='routing-'))

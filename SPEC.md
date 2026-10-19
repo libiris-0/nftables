@@ -141,7 +141,7 @@ INPUT、FORWARD 和 OUTPUT 的过滤结果由下表首个满足的条件决定�
 
 | 分类 | 条件 |
 | --- | --- |
-| specific | local 表、main 表，或优先级排在探测回退规则之前的 RPDB 规则为目的端选出了路由 |
+| specific | 优先级排在探测回退规则之前的 RPDB 规则为目的端选出了路由 |
 | gateway | 以上都没有为目的端选出路由 |
 
 无可用路由时，分类不作保证。
@@ -226,6 +226,7 @@ INPUT、FORWARD 和 OUTPUT 的过滤结果由下表首个满足的条件决定�
 
 - 存在探测回退规则。它匹配 `routing_probe`，所查询的表为任意目的端提供经 `routing_probe_interface` 到 `routing_probe_nexthop4` 或 `routing_probe_nexthop6` 的路由。
 - 路由字段为 `routing_probe` 时，local 表和 main 表排在探测回退规则之前查询。
+- 排在探测回退规则之前的 IPv6 规则不使用 `suppress_prefixlength`。
 - 路由字段为 `routing_divert` 时，RPDB 选出进入本机的路由。
 - `routing_probe_interface`、`routing_probe_nexthop4` 和 `routing_probe_nexthop6` 不用于其他路由。
 

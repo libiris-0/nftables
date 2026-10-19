@@ -59,13 +59,16 @@ class Fixture:
             ip('route', 'add', 'default', 'via', D[f'routing_probe_nexthop{v}'], 'dev',
                D['routing_probe_interface'], 'onlink', 'table', '1000')
             ip('route', 'add', 'local', 'default', 'dev', 'lo', 'table', '3346')
-            ip('route', 'add', 'default', 'via', a['wan'][1], 'table', 'default')
-            ip('route', 'add', 'unreachable', 'default', 'metric', '4294967294', 'table', 'default')
-            ip('rule', 'add', 'priority', '31000', 'fwmark', probe, 'lookup', 'main')
-            ip('rule', 'add', 'priority', '31001', 'fwmark', probe, 'lookup', '1000')
             ip('rule', 'add', 'priority', '100', 'fwmark', divert, 'lookup', '3346')
-            ip('rule', 'add', 'priority', '32000', 'lookup', 'main', 'suppress_prefixlength', '0')
-            ip('rule', 'add', 'priority', '32001', 'lookup', 'default')
+            ip('rule', 'add', 'priority', '31001', 'fwmark', probe, 'lookup', '1000')
+            if v == 4:
+                ip('route', 'add', 'default', 'via', a['wan'][1])
+                ip('rule', 'add', 'priority', '31000', 'fwmark', probe, 'lookup', 'main',
+                   'suppress_prefixlength', '0')
+            else:
+                ip('route', 'add', 'default', 'via', a['wan'][1], 'table', 'default')
+                ip('rule', 'add', 'priority', '31000', 'fwmark', probe, 'lookup', 'main')
+                ip('rule', 'add', 'priority', '32767', 'lookup', 'default')
         self.scratch = Path(tempfile.mkdtemp(prefix='integration-'))
         root = self.scratch / 'nftables.conf.d'
         root.mkdir()
